@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Manager - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="dashboard.html" style="color:white;">← Dashboard</a>
+</header>
+
+<div class="profile-card">
+  <h3>Resume Manager</h3>
+  <div id="alert-box"></div>
+  <div class="input-group">
+    <label>Upload Resume (PDF, DOC, DOCX — max 5MB)</label>
+    <input type="file" id="resume-file" accept=".pdf,.doc,.docx">
+  </div>
+  <button id="upload-btn" onclick="handleUpload()" style="width:100%;">Upload Resume</button>
+  <hr style="margin:20px 0;">
+  <h4 style="color:#0a66c2;margin-bottom:12px;">Uploaded Resumes</h4>
+  <div id="resume-list"></div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  async function init() {
+    await requireRole('seeker');
+    loadResumes();
+  }
+
+  async function loadResumes() {
+    const data = await apiGet('/upload.php');
+    const list = document.getElementById('resume-list');
+    if (!Array.isArray(data) || !data.length) {
+      list.innerHTML = '<p style="color:#888;font-size:13px;">No resumes uploaded yet.</p>'; return;
+    }
+    list.innerHTML = data.map(r => `
+      <div style="padding:10px;background:#f4f6f9;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+        <span>📄 ${escHtml(r.filename)} <small style="color:#888;">— ${new Date(r.uploaded_at).toLocaleDateString()}</small></span>
+        <button class="btn-sm danger" onclick="deleteResume(${r.id})">Delete</button>
+      </div>`).join('');
+  }
+
+  async function handleUpload() {
+    const file = document.getElementById('resume-file').files[0];
+    if (!file) { showAlert('alert-box', 'Please select a file.', 'error'); return; }
+    setLoading('upload-btn', true, 'Uploading...');
+    const form = new FormData();
+    form.append('resume', file);
+    const res = await fetch(API + '/upload.php', { method:'POST', credentials:'include', body:form }).then(r => r.json()).catch(() => ({ error:'Upload failed.' }));
+    setLoading('upload-btn', false);
+    showAlert('alert-box', res.success ? 'Resume uploaded!' : (res.error||'Upload failed.'), res.success?'success':'error');
+    if (res.success) { document.getElementById('resume-file').value = ''; loadResumes(); }
+  }
+
+  async function deleteResume(id) {
+    if (!confirm('Delete this resume?')) return;
+    const res = await apiDelete(`/upload.php?id=${id}`);
+    if (res.success) loadResumes();
+  }
+
+  init();
+</script>
+</body>
+</html>

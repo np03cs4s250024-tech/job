@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="inbox.html" style="color:white;">← Inbox</a>
+</header>
+
+<h2 class="title" id="chat-title">Chat</h2>
+
+<div class="chat-box" style="margin:0 auto 30px;">
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input">
+    <input type="text" id="msg-input" placeholder="Type a message...">
+    <button onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  let currentUser = null;
+  const partnerId = parseInt(new URLSearchParams(location.search).get('with'));
+
+  async function init() {
+    currentUser = await requireLogin();
+    const partner = await apiGet(`/users.php?id=${partnerId}`);
+    document.getElementById('chat-title').textContent = 'Chat with ' + escHtml(partner.name || 'User');
+    loadMessages();
+    setInterval(loadMessages, 5000);
+  }
+
+  async function loadMessages() {
+    const msgs = await apiGet(`/messages.php?with=${partnerId}`);
+    const box  = document.getElementById('chat-messages');
+    if (!Array.isArray(msgs) || !msgs.length) {
+      box.innerHTML = '<p style="text-align:center;color:#888;padding:20px;">No messages yet. Say hello!</p>'; return;
+    }
+    box.innerHTML = msgs.map(m => {
+      const mine = m.from_user == currentUser.id;
+      return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin-bottom:6px;" id="msg-${m.id}">
+        <div class="msg ${mine?'sent':'received'}">
+          ${escHtml(m.message)}
+          <div style="font-size:10px;opacity:.7;margin-top:4px;">${new Date(m.sent_at).toLocaleTimeString()}</div>
+        </div>
+        ${mine ? `<button style="font-size:11px;background:none;border:none;color:#e53935;cursor:pointer;padding:2px 4px;" onclick="deleteMsg(${m.id})">🗑️ Delete</button>` : ''}
+      </div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function sendMsg() {
+    const input = document.getElementById('msg-input');
+    const text  = input.value.trim();
+    if (!text) return;
+    const res = await apiPost('/messages.php', { to_user: partnerId, message: text });
+    if (res.success) { input.value = ''; loadMessages(); }
+    else alert(res.error || 'Failed to send.');
+  }
+
+  async function deleteMsg(id) {
+    if (!confirm('Delete this message?')) return;
+    const res = await apiDelete(`/messages.php?id=${id}`);
+    if (res.success) document.getElementById(`msg-${id}`)?.remove();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('msg-input').addEventListener('keypress', e => { if (e.key==='Enter') sendMsg(); });
+  });
+
+  init();
+</script>
+</body>
+</html>

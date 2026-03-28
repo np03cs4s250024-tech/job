@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Jobs - JSTACK Admin</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK <span>Admin</span></h2>
+  <a href="dashboard.html" style="color:white;">← Dashboard</a>
+</header>
+
+<div class="container">
+  <h2 class="title">All Job Listings</h2>
+
+  <div class="search-container">
+    <input type="text" id="search-text" placeholder="Search by title or employer...">
+    <button onclick="filterJobs()">Filter</button>
+    <button class="secondary" onclick="loadJobs()">Reset</button>
+  </div>
+
+  <div class="table-container" style="width:100%;">
+    <div id="alert-box"></div>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Title</th><th>Employer</th><th>Category</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="jobs-table"><tr><td colspan="6">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  let allJobs = [];
+
+  async function init() {
+    await requireRole('admin');
+    loadJobs();
+    document.getElementById('search-text').addEventListener('input', e => {
+      if (!e.target.value) renderTable(allJobs);
+    });
+  }
+
+  async function loadJobs() {
+    document.getElementById('search-text').value = '';
+    const res = await apiGet('/jobs.php?admin_view=1');
+    allJobs = Array.isArray(res) ? res : [];
+    renderTable(allJobs);
+  }
+
+  function filterJobs() {
+    const q = document.getElementById('search-text').value.toLowerCase();
+    renderTable(allJobs.filter(j =>
+      j.title.toLowerCase().includes(q) || (j.employer_name||'').toLowerCase().includes(q)
+    ));
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById('jobs-table');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="6">No jobs found.</td></tr>'; return; }
+    tbody.innerHTML = data.map(j => `
+      <tr>
+        <td>#${j.id}</td>
+        <td><strong>${escHtml(j.title)}</strong></td>
+        <td>${escHtml(j.employer_name||'N/A')}</td>
+        <td>${escHtml(j.category||'')}</td>
+        <td><span class="badge ${j.status==='active'?'badge-success':'badge-error'}">${j.status.toUpperCase()}</span></td>
+        <td>
+          <button class="btn-sm btn-outline" onclick="location.href='../jobs/detail.html?id=${j.id}'">View</button>
+          <button class="btn-sm danger" onclick="deleteJob(${j.id})">Delete</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  async function deleteJob(id) {
+    if (!confirm('Delete this job and all its applications?')) return;
+    const res = await apiDelete(`/jobs.php?id=${id}`);
+    if (res.success) { showAlert('alert-box', 'Job deleted.', 'success'); loadJobs(); }
+    else showAlert('alert-box', res.error || 'Delete failed.', 'error');
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Company Profile - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="dashboard.html" style="color:white;">← Dashboard</a>
+</header>
+
+<div class="profile-card">
+  <h3>Company Profile</h3>
+  <div id="alert-box"></div>
+  <div class="input-group"><label>Company Name</label><input type="text" id="company" placeholder="Company name"></div>
+  <div class="input-group"><label>Industry</label><input type="text" id="industry" placeholder="e.g. Technology"></div>
+  <div class="input-group"><label>Website</label><input type="url" id="website" placeholder="https://company.com"></div>
+  <div class="input-group"><label>About</label><textarea id="about" rows="4" placeholder="About your company..."></textarea></div>
+  <button onclick="handleSave()" style="width:100%;">Save Profile</button>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  async function init() {
+    await requireRole('employer');
+    const data = await apiGet('/profiles.php');
+    if (data) {
+      document.getElementById('company').value  = data.company  || '';
+      document.getElementById('industry').value = data.industry || '';
+      document.getElementById('website').value  = data.website  || '';
+      document.getElementById('about').value    = data.about    || '';
+    }
+  }
+
+  async function handleSave() {
+    const res = await apiPut('/profiles.php', {
+      company:  document.getElementById('company').value,
+      industry: document.getElementById('industry').value,
+      website:  document.getElementById('website').value,
+      about:    document.getElementById('about').value,
+    });
+    showAlert('alert-box', res.success ? 'Profile saved!' : (res.error||'Save failed.'), res.success?'success':'error');
+  }
+
+  init();
+</script>
+</body>
+</html>

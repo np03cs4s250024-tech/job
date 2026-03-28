@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Applications - JSTACK Admin</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK <span>Admin</span></h2>
+  <a href="dashboard.html" style="color:white;">← Dashboard</a>
+</header>
+
+<div class="container">
+  <h2 class="title">All Applications</h2>
+
+  <div class="filter-bar">
+    <select id="filter-status" onchange="filterApps()">
+      <option value="">All Statuses</option>
+      <option value="pending">Pending</option>
+      <option value="accepted">Accepted</option>
+      <option value="rejected">Rejected</option>
+    </select>
+    <input type="text" id="filter-search" placeholder="Search applicant or job title..."
+           oninput="filterApps()">
+  </div>
+
+  <div class="table-container" style="width:100%;">
+    <div id="alert-box"></div>
+    <table>
+      <thead>
+        <tr><th>Applicant</th><th>Email</th><th>Job</th><th>Employer</th><th>Date</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody id="apps-table"><tr><td colspan="7">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  let allApps = [];
+
+  async function init() {
+    await requireRole('admin');
+    const data = await apiGet('/applications.php?admin_view=1');
+    allApps = Array.isArray(data) ? data : [];
+    renderTable(allApps);
+  }
+
+  function filterApps() {
+    const status = document.getElementById('filter-status').value;
+    const q      = document.getElementById('filter-search').value.toLowerCase();
+    renderTable(allApps.filter(a =>
+      (!status || a.status === status) &&
+      ((a.seeker_name||'').toLowerCase().includes(q) || (a.job_title||'').toLowerCase().includes(q))
+    ));
+  }
+
+  function renderTable(apps) {
+    const tbody = document.getElementById('apps-table');
+    if (!apps.length) { tbody.innerHTML = '<tr><td colspan="7">No applications found.</td></tr>'; return; }
+    tbody.innerHTML = apps.map(a => `
+      <tr>
+        <td><strong>${escHtml(a.seeker_name)}</strong></td>
+        <td><small>${escHtml(a.seeker_email)}</small></td>
+        <td>${escHtml(a.job_title)}</td>
+        <td>${escHtml(a.employer_name||'N/A')}</td>
+        <td>${new Date(a.applied_at).toLocaleDateString()}</td>
+        <td><span class="badge badge-${a.status}">${a.status.toUpperCase()}</span></td>
+        <td>
+          <select onchange="updateStatus(${a.id},this.value)" style="padding:5px;border-radius:6px;border:1px solid #ccc;">
+            <option value="pending"  ${a.status==='pending'  ?'selected':''}>Pending</option>
+            <option value="accepted" ${a.status==='accepted' ?'selected':''}>Accept</option>
+            <option value="rejected" ${a.status==='rejected' ?'selected':''}>Reject</option>
+          </select>
+        </td>
+      </tr>`).join('');
+  }
+
+  async function updateStatus(id, status) {
+    const res = await apiPut(`/applications.php?id=${id}`, { status });
+    if (res.success) { showAlert('alert-box', `Updated to ${status}.`, 'success'); init(); }
+    else showAlert('alert-box', res.error || 'Update failed.', 'error');
+  }
+
+  init();
+</script>
+</body>
+</html>

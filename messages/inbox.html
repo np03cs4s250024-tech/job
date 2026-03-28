@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="../index.html" style="color:white;">← Home</a>
+</header>
+
+<div class="section">
+  <h2 class="title">Messages</h2>
+  <div id="conversations-list"></div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  async function init() {
+    const user = await requireLogin();
+    const data = await apiGet('/messages.php');
+    const list = document.getElementById('conversations-list');
+    if (!Array.isArray(data) || !data.length) {
+      list.innerHTML = '<p style="color:#888;text-align:center;">No conversations yet.</p>';
+    } else {
+      list.innerHTML = data.map(c => `
+        <div class="notif-item" style="cursor:pointer;" onclick="location.href='chat.html?with=${c.partner.id}'">
+          💬 <strong>${escHtml(c.partner.name)}</strong>
+          <span class="badge badge-info" style="margin-left:8px;">${c.partner.role}</span>
+          ${c.last_message ? `<small style="display:block;color:#888;margin-top:4px;">${escHtml(c.last_message.message.slice(0,60))}...</small>` : ''}
+        </div>`).join('');
+    }
+  }
+  init();
+</script>
+</body>
+</html>

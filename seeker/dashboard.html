@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seeker Dashboard - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <nav><a href="../index.html">Home</a></nav>
+  <div>
+    <span id="sk-name" style="color:white;font-size:14px;margin-right:12px;"></span>
+    <a href="#" onclick="logout()" style="color:#ffd700;">Logout</a>
+  </div>
+</header>
+
+<div class="container">
+  <h2 class="title">My Dashboard</h2>
+
+  <div class="dashboard-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="s-apps">--</p><p class="stat-label">Applications</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value green" id="s-acc">--</p><p class="stat-label">Accepted</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="s-pend">--</p><p class="stat-label">Pending</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="s-saved">--</p><p class="stat-label">Saved Jobs</p></div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="card" onclick="location.href='../jobs/listing.html'">🔍 Browse Jobs</div>
+    <div class="card" onclick="location.href='applied-jobs.html'">📄 My Applications</div>
+    <div class="card" onclick="location.href='saved-jobs.html'">🔖 Saved Jobs</div>
+    <div class="card" onclick="location.href='profile.html'">👤 My Profile</div>
+    <div class="card" onclick="location.href='resume-manager.html'">📋 Resume Manager</div>
+    <div class="card" onclick="location.href='../messages/inbox.html'">💬 Messages</div>
+    <div class="card" onclick="location.href='../notifications/notifications.html'">🔔 Notifications</div>
+    <div class="card" onclick="location.href='../settings/account.html'">⚙️ Settings</div>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  async function init() {
+    const user = await requireRole('seeker');
+    if (!user) return;
+    document.getElementById('sk-name').textContent = '👤 ' + escHtml(user.name);
+    const res = await apiGet('/dashboard-stats.php');
+    if (res.success) {
+      document.getElementById('s-apps').textContent  = res.stats.total_applications;
+      document.getElementById('s-acc').textContent   = res.stats.accepted;
+      document.getElementById('s-pend').textContent  = res.stats.pending;
+      document.getElementById('s-saved').textContent = res.stats.saved_jobs;
+    }
+  }
+  init();
+</script>
+</body>
+</html>

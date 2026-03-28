@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Applicants - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="dashboard.html" style="color:white;">← Dashboard</a>
+</header>
+
+<div class="container">
+  <h2 class="title">Job Applicants</h2>
+  <div id="alert-box"></div>
+
+  <div class="table-container" style="width:100%;">
+    <table>
+      <thead>
+        <tr><th>Applicant</th><th>Email</th><th>Job</th><th>Skills</th><th>Date</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody id="applicants-table"><tr><td colspan="7">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  async function init() {
+    await requireRole('employer');
+    const data = await apiGet('/applications.php?employer=1');
+    const tbody = document.getElementById('applicants-table');
+    if (!Array.isArray(data) || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No applicants yet.</td></tr>'; return;
+    }
+    tbody.innerHTML = data.map(a => `
+      <tr>
+        <td><strong>${escHtml(a.seeker_name)}</strong></td>
+        <td>${escHtml(a.seeker_email)}</td>
+        <td>${escHtml(a.job_title)}</td>
+        <td><small>${escHtml(a.skills||'N/A')}</small></td>
+        <td>${new Date(a.applied_at).toLocaleDateString()}</td>
+        <td><span class="badge badge-${a.status}">${a.status.toUpperCase()}</span></td>
+        <td>
+          <button class="btn-sm success" onclick="setStatus(${a.id},'accepted')">Accept</button>
+          <button class="btn-sm danger"  onclick="setStatus(${a.id},'rejected')">Reject</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  async function setStatus(id, status) {
+    const res = await apiPut(`/applications.php?id=${id}`, { status });
+    if (res.success) { showAlert('alert-box', `Application ${status}.`, 'success'); init(); }
+    else showAlert('alert-box', res.error || 'Failed.', 'error');
+  }
+
+  init();
+</script>
+</body>
+</html>

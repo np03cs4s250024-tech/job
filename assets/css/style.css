@@ -1,0 +1,178 @@
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+body { background:#f4f6f9; color:#333; }
+
+/* ── NAVBAR ── */
+.navbar { display:flex; justify-content:space-between; align-items:center;
+          padding:15px 40px; background:#0a66c2; color:white; flex-wrap:wrap; gap:10px; }
+.navbar h2 { font-size:22px; letter-spacing:1px; }
+.navbar a  { color:white; text-decoration:none; margin-left:15px; font-size:14px; }
+.navbar a:hover { text-decoration:underline; }
+.navbar span { font-size:13px; opacity:.7; }
+
+/* ── FOOTER ── */
+footer { text-align:center; padding:20px; background:#0a66c2;
+         color:white; margin-top:40px; font-size:14px; }
+
+/* ── HERO ── */
+.hero { text-align:center; padding:60px 20px;
+        background:linear-gradient(135deg,#0a66c2,#004182); color:white; }
+.hero h1 { font-size:40px; margin-bottom:10px; }
+.hero p  { font-size:18px; opacity:.9; }
+
+/* ── CONTAINER ── */
+.container { width:90%; max-width:1100px; margin:0 auto; padding:20px; }
+
+/* ── TITLE ── */
+.title { text-align:center; margin:30px 0; font-size:28px;
+         font-weight:bold; color:#333; }
+
+/* ── DASHBOARD GRID ── */
+.dashboard, .dashboard-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:20px; padding:20px 0; }
+
+/* ── CARD ── */
+.card { background:white; padding:30px; border-radius:12px;
+        box-shadow:0 4px 12px rgba(0,0,0,.08); text-align:center;
+        cursor:pointer; transition:all .3s; font-size:18px; font-weight:500; }
+.card:hover { transform:translateY(-6px); background:#0a66c2; color:white; }
+.stat-value        { font-size:36px; font-weight:bold; margin-bottom:8px; }
+.stat-value.blue   { color:#0a66c2; }
+.stat-value.green  { color:#2e7d32; }
+.stat-label        { font-size:13px; color:#888; }
+
+/* ── JOB CARDS ── */
+.job-container, #jobs {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px; padding:20px 0; }
+.job-card { background:white; padding:20px; border-radius:12px;
+            box-shadow:0 4px 12px rgba(0,0,0,.08); transition:transform .3s; }
+.job-card:hover { transform:translateY(-5px); }
+.job-card h3 { margin-bottom:8px; color:#0a66c2; }
+.job-card p  { font-size:14px; color:#555; margin-bottom:8px; }
+
+/* ── FORMS ── */
+.form-container { display:flex; justify-content:center; align-items:center; min-height:90vh; }
+.form-box { background:white; padding:35px; border-radius:12px;
+            box-shadow:0 8px 20px rgba(0,0,0,.12); width:100%; max-width:420px; }
+.form-box h2 { margin-bottom:20px; color:#0a66c2; text-align:center; }
+
+.input-group { margin-bottom:16px; }
+.input-group label { display:block; margin-bottom:6px; font-size:14px;
+                     font-weight:600; color:#555; }
+.input-group input,
+.input-group textarea,
+.input-group select {
+  width:100%; padding:10px 14px; border-radius:8px;
+  border:1px solid #ccc; font-size:14px; outline:none; transition:border .3s; }
+.input-group input:focus,
+.input-group textarea:focus,
+.input-group select:focus { border-color:#0a66c2; box-shadow:0 0 0 2px rgba(10,102,194,.1); }
+
+/* ── BUTTONS ── */
+button { padding:10px 20px; background:#0a66c2; color:white; border:none;
+         border-radius:8px; cursor:pointer; font-size:14px; transition:background .3s; }
+button:hover    { background:#004182; }
+button:disabled { background:#ccc; cursor:not-allowed; }
+button.danger,   .btn-danger  { background:#e53935; }
+button.danger:hover            { background:#b71c1c; }
+button.success,  .btn-success  { background:#2e7d32; }
+button.success:hover           { background:#1b5e20; }
+button.secondary               { background:#6c757d; }
+button.secondary:hover         { background:#495057; }
+.btn-sm      { padding:5px 12px; font-size:12px; }
+.btn-outline { background:white; color:#0a66c2; border:1px solid #0a66c2; }
+.btn-outline:hover { background:#0a66c2; color:white; }
+.btn-primary { background:#0a66c2; color:white; }
+
+/* ── TABLE ── */
+.table-container { background:white; padding:20px; border-radius:12px;
+                   box-shadow:0 4px 10px rgba(0,0,0,.08); overflow-x:auto; margin-bottom:20px; }
+table  { width:100%; border-collapse:collapse; }
+th     { background:#0a66c2; color:white; padding:12px; text-align:left; font-size:14px; }
+td     { padding:12px; border-bottom:1px solid #eee; font-size:14px; vertical-align:middle; }
+tr:hover td { background:#f1f5ff; }
+
+/* ── BADGES ── (match DB status values exactly) */
+.badge { padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; }
+
+/* Application status — DB: pending, accepted, rejected */
+.badge-pending,  .badge.pending  { background:#fff3cd; color:#856404; }
+.badge-accepted, .badge.accepted { background:#d4edda; color:#155724; }
+.badge-rejected, .badge.rejected { background:#f8d7da; color:#721c24; }
+
+/* Job status — DB: active, closed */
+.badge-success, .badge.active { background:#d1ecf1; color:#0c5460; }
+.badge-error,   .badge.closed { background:#f8d7da; color:#721c24; }
+
+/* User role badges */
+.badge-info { background:#cce5ff; color:#004085; }
+
+/* ── ALERTS ── */
+.alert         { padding:12px 18px; border-radius:8px; margin:10px 0; font-size:14px; }
+.alert.success, .alert-success { background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
+.alert.error,   .alert-error   { background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+.alert.info                    { background:#d1ecf1; color:#0c5460; border:1px solid #bee5eb; }
+
+/* ── NOTIFICATIONS ── */
+.notif-item { background:white; padding:15px 20px; border-radius:10px;
+              margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,.06);
+              border-left:4px solid #0a66c2; }
+.notif-item.unread { border-left-color:#e53935; background:#fff8f8; }
+
+/* ── CHAT ── */
+.chat-box { width:90%; max-width:700px; margin:0 auto 30px; background:white;
+            border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,.1); }
+.chat-messages { padding:20px; height:400px; overflow-y:auto;
+                 display:flex; flex-direction:column; gap:10px; }
+.msg { max-width:65%; padding:10px 14px; border-radius:10px; font-size:14px; line-height:1.5; }
+.msg.sent     { background:#0a66c2; color:white; align-self:flex-end; border-bottom-right-radius:2px; }
+.msg.received { background:#f1f1f1; color:#333; align-self:flex-start; border-bottom-left-radius:2px; }
+.chat-input   { display:flex; padding:12px; border-top:1px solid #eee; gap:10px; }
+.chat-input input { flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; outline:none; font-size:14px; }
+
+/* ── PROFILE CARD ── */
+.profile-card { width:90%; max-width:560px; background:white; margin:30px auto;
+                padding:30px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.1); }
+.profile-card h3 { margin-bottom:20px; color:#0a66c2; text-align:center; font-size:20px; }
+
+/* ── SECTION ── */
+.section { width:90%; max-width:900px; margin:30px auto; }
+
+/* ── FILTER / SEARCH BAR ── */
+.filter-bar, .search-bar, .search-container {
+  display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
+.filter-bar select, .filter-bar input,
+.search-bar input, .search-container input {
+  padding:9px 14px; border-radius:8px; border:1px solid #ccc; font-size:14px; outline:none; }
+.filter-bar input:focus, .filter-bar select:focus { border-color:#0a66c2; }
+
+/* ── AUTOCOMPLETE ── */
+.autocomplete-list, #autocomplete-list {
+  position:absolute; background:white; border:1px solid #ddd;
+  border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.1);
+  z-index:1000; min-width:280px; max-height:250px;
+  overflow-y:auto; list-style:none; padding:0; margin-top:4px; }
+
+/* ── DIVIDER ── */
+hr, .divider { border:none; border-top:1px solid #e0e0e0; margin:20px 0; }
+
+/* ── DANGER ZONE ── */
+.danger-zone { background:#fff5f5; border:1px solid #f8d7da;
+               border-radius:8px; padding:16px; margin-top:20px; }
+.danger-zone h4 { color:#721c24; margin-bottom:8px; }
+
+/* ── FORM GRID ── */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width:768px) {
+  .navbar   { padding:12px 20px; }
+  .hero h1  { font-size:26px; }
+  .dashboard, .dashboard-grid { grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
+  .job-container, #jobs { grid-template-columns:1fr; padding:10px; }
+  .table-container { padding:10px; }
+  .form-grid { grid-template-columns:1fr; }
+  .filter-bar, .search-bar { flex-direction:column; }
+  .chat-messages { height:300px; }
+}

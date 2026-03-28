@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apply for Job - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="../jobs/listing.html" style="color:white;">← Back to Jobs</a>
+</header>
+
+<div class="form-container">
+  <div class="form-box" style="max-width:520px;text-align:left;">
+    <h2 id="job-title" style="text-align:center;">Apply for Job</h2>
+    <div id="alert-box"></div>
+    <div class="input-group">
+      <label>Cover Note / Why are you a good fit?</label>
+      <textarea id="note" rows="6" placeholder="Write a brief note about your background and why you are suitable for this role..." required></textarea>
+    </div>
+    <button id="apply-btn" onclick="handleApply()" style="width:100%;">Submit Application</button>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  const jobId = new URLSearchParams(location.search).get('id');
+
+  async function init() {
+    await requireRole('seeker');
+    if (!jobId) { showAlert('alert-box', 'No job selected.', 'error'); return; }
+    const job = await apiGet(`/jobs.php?id=${jobId}`);
+    if (job && !job.error) document.getElementById('job-title').textContent = 'Apply: ' + escHtml(job.title);
+  }
+
+  async function handleApply() {
+    const note = document.getElementById('note').value.trim();
+    if (!note) { showAlert('alert-box', 'Please write a cover note.', 'error'); return; }
+    setLoading('apply-btn', true, 'Submitting...');
+    const res = await apiPost('/applications.php', { job_id: parseInt(jobId), resume_note: note });
+    setLoading('apply-btn', false);
+    if (res.success) {
+      showAlert('alert-box', 'Application submitted successfully!', 'success');
+      setTimeout(() => location.href = 'applied-jobs.html', 1500);
+    } else {
+      showAlert('alert-box', res.error || 'Could not submit application.', 'error');
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

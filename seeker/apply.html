@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apply for Job - JSTACK</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body class="bg-light">
+
+<header class="navbar seeker-navbar">
+  <div class="container nav-flex">
+    <h2 class="logo">JSTACK</h2>
+    <a href="../jobs/listing.html" class="nav-link"><i class="fas fa-arrow-left"></i> Back to Jobs</a>
+  </div>
+</header>
+
+<div class="container section">
+  <div class="row justify-center">
+    <div class="col-md-6">
+      <div class="card shadow p-5 bg-white">
+        <div class="text-center mb-4">
+          <div class="icon-circle bg-soft-primary mx-auto mb-3">
+            <i class="fas fa-paper-plane text-primary"></i>
+          </div>
+          <h2 id="job-title" class="title m-0">Apply for Position</h2>
+          <p id="company-name" class="text-muted small">Loading company details...</p>
+        </div>
+
+        <div id="alert-box"></div>
+
+        <div class="application-form">
+          <div class="input-group mb-4">
+            <label class="form-label font-bold">1. Select Your Resume <span class="text-danger">*</span></label>
+            <select id="resume-id" class="form-control">
+              <option value="">-- Choose an uploaded resume --</option>
+            </select>
+            <div class="mt-2 text-right">
+                <a href="resume-manager.html" class="small text-link"><i class="fas fa-plus-circle"></i> Upload new resume</a>
+            </div>
+          </div>
+
+          <div class="input-group mb-4">
+            <label class="form-label font-bold">2. Why are you a good fit?</label>
+            <textarea id="note" class="form-control" rows="6" placeholder="Briefly highlight your relevant experience and why you're interested in this role..."></textarea>
+            <small class="text-muted">A personalized note increases response rates significantly.</small>
+          </div>
+
+          <button id="apply-btn" onclick="handleApply()" class="btn-primary w-full py-3">
+            <i class="fas fa-check-circle"></i> Submit My Application
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container text-center">
+    <p>© 2026 JSTACK Career Portal</p>
+  </div>
+</footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  const jobId = new URLSearchParams(location.search).get('id');
+
+  async function init() {
+    // 1. Role & ID Security Check
+    const user = await checkAuth('seeker');
+    if (!user) return;
+    if (!jobId) { 
+        showAlert('alert-box', 'No job ID specified. Redirecting...', 'error'); 
+        setTimeout(() => location.href = '../jobs/listing.html', 2000);
+        return; 
+    }
+
+    // 2. Fetch Job Context
+    const job = await apiGet(`/jobs.php?id=${jobId}`);
+    if (job && !job.error) {
+      document.getElementById('job-title').textContent = escHtml(job.title);
+      document.getElementById('company-name').textContent = escHtml(job.company || 'Hiring Company');
+    }
+
+    // 3. Fetch Seeker's Resumes for the Dropdown
+    const resumeRes = await apiGet('/upload.php');
+    const resumeSelect = document.getElementById('resume-id');
+    
+    // Check if response is structured as {success, data}
+    const resumes = (resumeRes && resumeRes.data) ? resumeRes.data : (Array.isArray(resumeRes) ? resumeRes : []);
+
+    if (resumes.length > 0) {
+      resumeSelect.innerHTML += resumes.map(r => 
+        `<option value="${r.id}">${escHtml(r.filename)} (Uploaded ${new Date(r.uploaded_at).toLocaleDateString()})</option>`
+      ).join('');
+    } else {
+      resumeSelect.innerHTML = `<option value="">No resumes found. Please upload one first.</option>`;
+      resumeSelect.disabled = true;
+    }
+  }
+
+  async function handleApply() {
+    const resumeId = document.getElementById('resume-id').value;
+    const note = document.getElementById('note').value.trim();
+
+    // Validation
+    if (!resumeId) {
+      showAlert('alert-box', 'Please select a resume to attach to this application.', 'error');
+      return;
+    }
+    if (!note) {
+      showAlert('alert-box', 'A short cover note is required.', 'error');
+      return;
+    }
+
+    setLoading('apply-btn', true, 'Sending Application...');
+
+    try {
+      const res = await apiPost('/applications.php', { 
+        job_id: parseInt(jobId), 
+        resume_id: parseInt(resumeId), // Now sending the specific resume ID
+        resume_note: note 
+      });
+
+      if (res.success) {
+        showAlert('alert-box', 'Application submitted! Good luck!', 'success');
+        setTimeout(() => location.href = 'applied-jobs.html', 1500);
+      } else {
+        showAlert('alert-box', res.error || 'Submission failed.', 'error');
+      }
+    } catch (err) {
+      showAlert('alert-box', 'Connection error. Please try again.', 'error');
+    } finally {
+      setLoading('apply-btn', false);
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

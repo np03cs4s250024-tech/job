@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="../index.html" style="color:white;">← Home</a>
+</header>
+
+<div class="section">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h2 style="color:#0a66c2;">🔔 Notifications</h2>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-sm btn-outline" onclick="markRead()">Mark All Read</button>
+      <button class="btn-sm danger" onclick="clearAll()">Clear All</button>
+    </div>
+  </div>
+  <div id="notif-list"></div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  async function init() {
+    await requireLogin();
+    load();
+  }
+
+  async function load() {
+    const data = await apiGet('/notifications.php');
+    const list = document.getElementById('notif-list');
+    if (!Array.isArray(data) || !data.length) {
+      list.innerHTML = '<div class="notif-item"><p>No notifications yet.</p></div>'; return;
+    }
+    list.innerHTML = data.map(n => `
+      <div class="notif-item ${n.is_read ? '' : 'unread'}">
+        <p>${escHtml(n.message)}</p>
+        <small style="color:#888;">${new Date(n.created_at).toLocaleString()}</small>
+      </div>`).join('');
+  }
+
+  async function markRead() {
+    await apiPut('/notifications.php', {});
+    load();
+  }
+
+  async function clearAll() {
+    if (!confirm('Clear all notifications?')) return;
+    await apiDelete('/notifications.php');
+    load();
+  }
+
+  init();
+</script>
+</body>
+</html>

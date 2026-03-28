@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post a Job - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="dashboard.html" style="color:white;">← Dashboard</a>
+</header>
+
+<div class="form-container">
+  <div class="form-box" style="max-width:560px;text-align:left;">
+    <h2 style="text-align:center;">Post a New Vacancy</h2>
+    <div id="alert-box"></div>
+
+    <div class="input-group">
+      <label>Job Title</label>
+      <input type="text" id="title" placeholder="e.g. Senior PHP Developer" required>
+    </div>
+    <div class="input-group">
+      <label>Company Name</label>
+      <input type="text" id="company" placeholder="Your company name" required>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="input-group">
+        <label>Salary Range</label>
+        <input type="text" id="salary" placeholder="e.g. $800-$1200">
+      </div>
+      <div class="input-group">
+        <label>Category</label>
+        <select id="category">
+          <option value="IT">IT & Software</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Design">UI/UX Design</option>
+          <option value="Finance">Finance</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>Location</label>
+      <input type="text" id="location" placeholder="e.g. Kathmandu or Remote" required>
+    </div>
+    <div class="input-group">
+      <label>Job Description</label>
+      <textarea id="description" rows="6" placeholder="Describe responsibilities and requirements..." required></textarea>
+    </div>
+    <button id="submit-btn" onclick="handlePost()" style="width:100%;">🚀 Post Vacancy</button>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  let currentUser = null;
+
+  async function init() {
+    currentUser = await requireRole('employer');
+  }
+
+  async function handlePost() {
+    const title = document.getElementById('title').value.trim();
+    const company = document.getElementById('company').value.trim();
+    const location = document.getElementById('location').value.trim();
+    const description = document.getElementById('description').value.trim();
+    if (!title || !company || !location || !description) {
+      showAlert('alert-box', 'Please fill all required fields.', 'error'); return;
+    }
+    setLoading('submit-btn', true, 'Posting...');
+    const res = await apiPost('/jobs.php', {
+      title, company, location, description,
+      salary:   document.getElementById('salary').value.trim(),
+      category: document.getElementById('category').value,
+      employer_id: currentUser.id,
+    });
+    setLoading('submit-btn', false);
+    if (res.success) {
+      showAlert('alert-box', 'Job posted! Redirecting...', 'success');
+      setTimeout(() => location.href = 'dashboard.html', 1500);
+    } else {
+      showAlert('alert-box', res.error || 'Failed to post job.', 'error');
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

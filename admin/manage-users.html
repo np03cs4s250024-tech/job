@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Users - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK <span>Admin</span></h2>
+  <a href="dashboard.html" style="color:white;">← Dashboard</a>
+</header>
+
+<div class="container">
+  <h2 class="title">User Management</h2>
+
+  <div class="form-box" style="max-width:700px;margin:0 auto 30px;text-align:left;">
+    <h3 style="color:#0a66c2;margin-bottom:16px;">➕ Add New User</h3>
+    <div id="create-alert"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="new-name" placeholder="Full name" required>
+      </div>
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="new-email" placeholder="email@example.com" required>
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="new-password" placeholder="Min 6 chars" required>
+      </div>
+      <div class="input-group">
+        <label>Role</label>
+        <select id="new-role">
+          <option value="seeker">Job Seeker</option>
+          <option value="employer">Employer</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+    <button onclick="createUser()" style="margin-top:10px;">Add User</button>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="search-text" placeholder="Search by name or email..."
+           oninput="localSearch()">
+    <input type="number" id="search-id" placeholder="Find by ID...">
+    <button onclick="searchById()">Find</button>
+    <button class="secondary" onclick="loadUsers()">Reset</button>
+  </div>
+
+  <div class="table-container" style="width:100%;">
+    <div id="table-alert"></div>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Name / Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="users-table"><tr><td colspan="5">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  let allUsers = [];
+  const roleClass = { admin:'badge-error', employer:'badge-success', seeker:'badge-info' };
+
+  async function init() {
+    await requireRole('admin');
+    loadUsers();
+  }
+
+  async function loadUsers() {
+    document.getElementById('search-text').value = '';
+    document.getElementById('search-id').value   = '';
+    const data = await apiGet('/users.php');
+    allUsers = Array.isArray(data) ? data : [];
+    renderTable(allUsers);
+  }
+
+  function localSearch() {
+    const q = document.getElementById('search-text').value.toLowerCase();
+    renderTable(allUsers.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
+  }
+
+  async function searchById() {
+    const id = document.getElementById('search-id').value.trim();
+    if (!id) return;
+    const u = await apiGet(`/users.php?id=${id}`);
+    renderTable(u && !u.error ? [u] : []);
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById('users-table');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="5">No users found.</td></tr>'; return; }
+    tbody.innerHTML = data.map(u => `
+      <tr>
+        <td>#${u.id}</td>
+        <td><strong>${escHtml(u.name)}</strong><br><small>${escHtml(u.email)}</small></td>
+        <td><span class="badge ${roleClass[u.role]||'badge-info'}">${u.role.toUpperCase()}</span></td>
+        <td>${new Date(u.created_at).toLocaleDateString()}</td>
+        <td>
+          <button class="btn-sm btn-outline" onclick="editUser(${u.id},'${escHtml(u.name)}')">Edit</button>
+          ${u.role !== 'admin' ? `<button class="btn-sm danger" onclick="deleteUser(${u.id})">Delete</button>` : ''}
+        </td>
+      </tr>`).join('');
+  }
+
+  async function createUser() {
+    const data = {
+      name:     document.getElementById('new-name').value.trim(),
+      email:    document.getElementById('new-email').value.trim(),
+      password: document.getElementById('new-password').value,
+      role:     document.getElementById('new-role').value,
+    };
+    if (!data.name || !data.email || !data.password) {
+      showAlert('create-alert', 'All fields are required.', 'error'); return;
+    }
+    const res = await apiPost('/users.php', data);
+    if (res.success) {
+      showAlert('create-alert', 'User created successfully!', 'success');
+      ['new-name','new-email','new-password'].forEach(id => document.getElementById(id).value = '');
+      loadUsers();
+    } else {
+      showAlert('create-alert', res.error || 'Failed to create user.', 'error');
+    }
+  }
+
+  async function editUser(id, name) {
+    const newName = prompt('Enter new name for ' + name, name);
+    if (!newName) return;
+    const res = await apiPut(`/users.php?id=${id}`, { name: newName });
+    if (res.success) loadUsers();
+    else alert(res.error || 'Update failed.');
+  }
+
+  async function deleteUser(id) {
+    if (!confirm('Delete this user and all their data?')) return;
+    const res = await apiDelete(`/users.php?id=${id}`);
+    if (res.success) { showAlert('table-alert', 'User deleted.', 'success'); loadUsers(); }
+    else showAlert('table-alert', res.error || 'Delete failed.', 'error');
+  }
+
+  init();
+</script>
+</body>
+</html>

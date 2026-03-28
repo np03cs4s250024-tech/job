@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage My Jobs - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="dashboard.html" style="color:white;">← Dashboard</a>
+</header>
+
+<div class="container">
+  <h2 class="title">My Posted Jobs</h2>
+  <div id="alert-box"></div>
+  <div class="table-container" style="width:100%;">
+    <table>
+      <thead>
+        <tr><th>Title</th><th>Salary</th><th>Location</th><th>Apps</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="jobs-table"><tr><td colspan="6">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="edit-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+     background:rgba(0,0,0,.5);z-index:999;justify-content:center;align-items:center;">
+  <div style="background:white;padding:30px;border-radius:12px;width:90%;max-width:520px;
+              max-height:90vh;overflow-y:auto;">
+    <h3 style="color:#0a66c2;margin-bottom:20px;">Edit Job</h3>
+    <div id="modal-alert"></div>
+    <input type="hidden" id="edit-id">
+    <div class="input-group"><label>Title</label><input type="text" id="edit-title"></div>
+    <div class="input-group"><label>Company</label><input type="text" id="edit-company"></div>
+    <div class="input-group"><label>Salary</label><input type="text" id="edit-salary"></div>
+    <div class="input-group"><label>Category</label>
+      <select id="edit-category">
+        <option>IT</option><option>Marketing</option>
+        <option>Design</option><option>Finance</option><option>Other</option>
+      </select>
+    </div>
+    <div class="input-group"><label>Location</label><input type="text" id="edit-location"></div>
+    <div class="input-group"><label>Description</label>
+      <textarea id="edit-description" rows="4"></textarea>
+    </div>
+    <div class="input-group"><label>Status</label>
+      <select id="edit-status">
+        <option value="active">Active</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button onclick="submitEdit()" style="flex:1;">Save Changes</button>
+      <button onclick="closeModal()" class="secondary" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  // ✅ FIX: Store jobs in a map so openEdit gets job by ID — no JSON in onclick attr
+  let jobMap = {};
+
+  async function init() {
+    await requireRole('employer');
+    loadJobs();
+  }
+
+  async function loadJobs() {
+    const data  = await apiGet('/jobs.php?mine=1');
+    const tbody = document.getElementById('jobs-table');
+    jobMap = {};
+
+    if (!Array.isArray(data) || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No jobs posted yet. <a href="post-job.html">Post one</a></td></tr>';
+      return;
+    }
+
+    data.forEach(j => { jobMap[j.id] = j; });
+
+    tbody.innerHTML = data.map(j => `
+      <tr>
+        <td><strong>${escHtml(j.title)}</strong></td>
+        <td>${escHtml(j.salary || 'N/A')}</td>
+        <td>${escHtml(j.location || '')}</td>
+        <td>${j.application_count || 0}</td>
+        <td><span class="badge ${j.status === 'active' ? 'badge-success' : 'badge-error'}">${j.status}</span></td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn-sm btn-outline" onclick="openEdit(${j.id})">Edit</button>
+          <button class="btn-sm danger"       onclick="removeJob(${j.id})">Delete</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  // ✅ FIX: Receive job ID, look up from jobMap
+  function openEdit(id) {
+    const j = jobMap[id];
+    if (!j) return;
+    document.getElementById('edit-id').value          = j.id;
+    document.getElementById('edit-title').value       = j.title        || '';
+    document.getElementById('edit-company').value     = j.company      || '';
+    document.getElementById('edit-salary').value      = j.salary       || '';
+    document.getElementById('edit-category').value    = j.category     || 'IT';
+    document.getElementById('edit-location').value    = j.location     || '';
+    document.getElementById('edit-description').value = j.description  || '';
+    document.getElementById('edit-status').value      = j.status       || 'active';
+    document.getElementById('edit-modal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+    document.getElementById('modal-alert').innerHTML    = '';
+  }
+
+  async function submitEdit() {
+    const id  = document.getElementById('edit-id').value;
+    const res = await apiPut(`/jobs.php?id=${id}`, {
+      title:       document.getElementById('edit-title').value.trim(),
+      company:     document.getElementById('edit-company').value.trim(),
+      salary:      document.getElementById('edit-salary').value.trim(),
+      category:    document.getElementById('edit-category').value,
+      location:    document.getElementById('edit-location').value.trim(),
+      description: document.getElementById('edit-description').value.trim(),
+      status:      document.getElementById('edit-status').value,
+    });
+    if (res.success) {
+      closeModal();
+      showAlert('alert-box', 'Job updated successfully!', 'success');
+      loadJobs();
+    } else {
+      document.getElementById('modal-alert').innerHTML =
+        `<div class="alert error">${escHtml(res.error || 'Update failed.')}</div>`;
+    }
+  }
+
+  async function removeJob(id) {
+    if (!confirm('Delete this job and all its applications?')) return;
+    const res = await apiDelete(`/jobs.php?id=${id}`);
+    if (res.success) { showAlert('alert-box', 'Job deleted.', 'success'); loadJobs(); }
+    else showAlert('alert-box', res.error || 'Delete failed.', 'error');
+  }
+
+  init();
+</script>
+</body>
+</html>

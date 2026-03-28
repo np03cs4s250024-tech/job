@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Search - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    .search-panel{background:white;padding:30px;border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,.08);max-width:800px;margin:30px auto;}
+    .search-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .autocomplete-wrapper{position:relative;}
+    #autocomplete-list{position:absolute;width:100%;top:100%;left:0;
+      background:white;border:1px solid #ddd;border-radius:8px;
+      box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:1000;padding:0;margin-top:4px;}
+  </style>
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="../index.html">← Home</a>
+  <div id="nav-actions"></div>
+</header>
+
+<div class="container">
+  <h2 class="title">Advanced Job Search</h2>
+
+  <div class="search-panel">
+    <div class="search-grid">
+      <div class="input-group autocomplete-wrapper">
+        <label>Keyword / Title</label>
+        <input type="text" id="keyword" placeholder="e.g. PHP Developer">
+        <ul id="autocomplete-list" style="display:none;list-style:none;"></ul>
+      </div>
+      <div class="input-group">
+        <label>Category</label>
+        <select id="category">
+          <option value="">All Categories</option>
+          <option>IT</option><option>Marketing</option>
+          <option>Design</option><option>Finance</option><option>Other</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Location</label>
+        <input type="text" id="location" placeholder="e.g. Kathmandu">
+      </div>
+      <div class="input-group" style="display:flex;align-items:flex-end;gap:10px;">
+        <button onclick="doSearch()" style="flex:1;">🔍 Search</button>
+        <button onclick="resetSearch()" class="secondary" style="flex:1;">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <p id="search-status" style="text-align:center;margin:10px 0;"></p>
+  <div id="jobs-container" class="job-container"></div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script src="../assets/js/jobs.js"></script>
+<script>
+  async function doSearch() {
+    document.getElementById('search-status').textContent = 'Searching...';
+    document.getElementById('jobs-container').innerHTML  = '';
+    const res = await loadAllJobs(
+      document.getElementById('keyword').value,
+      document.getElementById('category').value,
+      document.getElementById('location').value
+    );
+    const status    = document.getElementById('search-status');
+    const container = document.getElementById('jobs-container');
+    if (res && res.success && res.data.length) {
+      status.textContent    = res.message;
+      status.style.color    = 'green';
+      container.innerHTML   = res.data.map(j => renderJobCard(j)).join('');
+    } else {
+      status.textContent  = 'No jobs found matching your criteria.';
+      status.style.color  = '#e53935';
+    }
+  }
+
+  function resetSearch() {
+    ['keyword','location'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('category').value = '';
+    document.getElementById('search-status').textContent = '';
+    document.getElementById('jobs-container').innerHTML  = '';
+    doSearch();
+  }
+
+  // Pre-fill from URL params
+  const params = new URLSearchParams(location.search);
+  if (params.get('keyword')) document.getElementById('keyword').value = params.get('keyword');
+
+  setupAutocomplete('keyword', 'autocomplete-list');
+  doSearch();
+</script>
+</body>
+</html>

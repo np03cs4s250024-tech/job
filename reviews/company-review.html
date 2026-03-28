@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Company Reviews - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="../index.html" style="color:white;">← Home</a>
+  <div id="nav-actions"></div>
+</header>
+
+<div class="container" style="max-width:700px;">
+  <h2 class="title">Company Reviews</h2>
+
+  <div class="profile-card">
+    <h3>Leave a Review</h3>
+    <div id="alert-box"></div>
+    <div class="input-group"><label>Company Name</label><input type="text" id="company" placeholder="Company you worked at" required></div>
+    <div class="input-group">
+      <label>Rating</label>
+      <select id="rating">
+        <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+        <option value="4">⭐⭐⭐⭐ Good</option>
+        <option value="3">⭐⭐⭐ Average</option>
+        <option value="2">⭐⭐ Poor</option>
+        <option value="1">⭐ Terrible</option>
+      </select>
+    </div>
+    <div class="input-group"><label>Review</label><textarea id="review" rows="4" placeholder="Share your experience..." required></textarea></div>
+    <button onclick="submitReview()" style="width:100%;">Submit Review</button>
+  </div>
+
+  <div style="margin-top:10px;display:flex;gap:10px;">
+    <input type="text" id="search-company" placeholder="Search reviews by company..." style="flex:1;padding:10px;border-radius:8px;border:1px solid #ccc;">
+    <button onclick="loadReviews()">Search</button>
+    <button class="secondary" onclick="document.getElementById('search-company').value='';loadReviews()">All</button>
+  </div>
+
+  <div id="avg-rating" style="text-align:center;margin:16px 0;font-size:18px;font-weight:bold;color:#0a66c2;"></div>
+  <div id="reviews-list"></div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  let currentUser = null;
+
+  async function init() {
+    currentUser = await getCurrentUser();
+    loadReviews();
+  }
+
+  async function loadReviews() {
+    const company = document.getElementById('search-company').value.trim();
+    const url = company ? `/reviews.php?company=${encodeURIComponent(company)}` : '/reviews.php';
+    const data = await apiGet(url);
+    const list = document.getElementById('reviews-list');
+    const avg  = document.getElementById('avg-rating');
+
+    if (data.average_rating) avg.textContent = `Average Rating: ${'⭐'.repeat(Math.round(data.average_rating))} (${data.average_rating}/5)`;
+    else avg.textContent = '';
+
+    if (!data.reviews || !data.reviews.length) {
+      list.innerHTML = '<p style="color:#888;text-align:center;">No reviews found.</p>'; return;
+    }
+    list.innerHTML = data.reviews.map(r => {
+      const canDel = currentUser && (currentUser.id == r.user_id || currentUser.role === 'admin');
+      return `<div class="notif-item" id="rev-${r.id}">
+        <div style="display:flex;justify-content:space-between;align-items:start;">
+          <div>
+            <strong>${escHtml(r.company)}</strong> — ${'⭐'.repeat(r.rating)}
+            <p style="margin:6px 0;font-size:14px;">${escHtml(r.review)}</p>
+            <small style="color:#888;">by ${escHtml(r.author)} on ${new Date(r.created_at).toLocaleDateString()}</small>
+          </div>
+          ${canDel ? `<button class="btn-sm danger" onclick="deleteReview(${r.id})">Delete</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function submitReview() {
+    if (!currentUser) { showAlert('alert-box', 'Please login to leave a review.', 'error'); return; }
+    const res = await apiPost('/reviews.php', {
+      company: document.getElementById('company').value,
+      rating:  parseInt(document.getElementById('rating').value),
+      review:  document.getElementById('review').value,
+    });
+    if (res.success) {
+      showAlert('alert-box', 'Review submitted!', 'success');
+      document.getElementById('company').value = '';
+      document.getElementById('review').value  = '';
+      loadReviews();
+    } else {
+      showAlert('alert-box', res.error || 'Failed.', 'error');
+    }
+  }
+
+  async function deleteReview(id) {
+    if (!confirm('Delete this review?')) return;
+    const res = await apiDelete(`/reviews.php?id=${id}`);
+    if (res.success) document.getElementById(`rev-${id}`)?.remove();
+  }
+
+  init();
+</script>
+</body>
+</html>

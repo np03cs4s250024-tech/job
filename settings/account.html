@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Settings - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="../index.html" style="color:white;">← Home</a>
+</header>
+
+<div class="profile-card">
+  <h3>Account Settings</h3>
+  <div id="alert-box"></div>
+  <div class="input-group"><label>Full Name</label><input type="text" id="name" required></div>
+  <div class="input-group"><label>Email</label><input type="email" id="email" required></div>
+  <button onclick="handleSave()" style="width:100%;">Update Account</button>
+
+  <hr style="margin:20px 0;">
+  <button class="secondary" onclick="location.href='change-password.html'" style="width:100%;">🔒 Change Password</button>
+
+  <hr style="margin:20px 0;">
+  <div style="background:#fff5f5;border:1px solid #f8d7da;border-radius:8px;padding:16px;">
+    <h4 style="color:#721c24;margin-bottom:8px;">⚠️ Danger Zone</h4>
+    <p style="font-size:13px;color:#555;margin-bottom:12px;">Deleting your account is permanent and cannot be undone.</p>
+    <button class="danger" onclick="deleteAccount()" style="width:100%;">🗑️ Delete My Account</button>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  let currentUser = null;
+
+  async function init() {
+    currentUser = await requireLogin();
+    document.getElementById('name').value  = currentUser.name;
+    document.getElementById('email').value = currentUser.email;
+  }
+
+  async function handleSave() {
+    const res = await apiPatch('/profiles.php', {
+      name:  document.getElementById('name').value.trim(),
+      email: document.getElementById('email').value.trim(),
+    });
+    showAlert('alert-box', res.success ? 'Account updated!' : (res.error||'Update failed.'), res.success?'success':'error');
+  }
+
+  async function deleteAccount() {
+    if (!confirm('This will permanently delete your account and all data. Continue?')) return;
+    if (!confirm('Final confirmation — this cannot be undone.')) return;
+    const res = await apiDelete(`/users.php?id=${currentUser.id}`);
+    if (res.success) { alert('Account deleted.'); window.location.href = BASE + '/index.html'; }
+    else showAlert('alert-box', res.error || 'Delete failed.', 'error');
+  }
+
+  init();
+</script>
+</body>
+</html>

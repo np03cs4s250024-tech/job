@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - JSTACK</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body class="bg-light">
+
+<header class="navbar admin-navbar">
+  <div class="container nav-flex">
+    <h2 class="logo">JSTACK <small>Admin</small></h2>
+    <nav class="nav-links">
+      <a href="manage-users.html">Users</a>
+      <a href="manage-jobs.html">Jobs</a>
+      <a href="manage-applications.html">Apps</a>
+      <a href="reports.html">Reports</a>
+    </nav>
+    <div class="admin-profile">
+      <span id="admin-name" class="profile-name"></span>
+      <button onclick="logout()" class="btn-logout">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div class="container section">
+  <h2 class="title">Control Center</h2>
+  <p class="subtitle">Platform overview and management</p>
+
+  <div class="stats-grid">
+    <div class="stat-card shadow">
+      <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+      <div class="stat-info">
+        <h3 id="s-users">--</h3>
+        <p>Total Users</p>
+      </div>
+    </div>
+    <div class="stat-card shadow">
+      <div class="stat-icon purple"><i class="fas fa-briefcase"></i></div>
+      <div class="stat-info">
+        <h3 id="s-jobs">--</h3>
+        <p>Active Jobs</p>
+      </div>
+    </div>
+    <div class="stat-card shadow">
+      <div class="stat-icon orange"><i class="fas fa-file-alt"></i></div>
+      <div class="stat-info">
+        <h3 id="s-apps">--</h3>
+        <p>Applications</p>
+      </div>
+    </div>
+    <div class="stat-card shadow">
+      <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+      <div class="stat-info">
+        <h3 id="s-accepted">--</h3>
+        <p>Placements</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-stats-grid mt-4">
+    <div class="card p-3 shadow-sm border-left-employer">
+      <p class="text-muted small mb-1">Total Employers</p>
+      <h4 id="s-employers" class="m-0">--</h4>
+    </div>
+    <div class="card p-3 shadow-sm border-left-seeker">
+      <p class="text-muted small mb-1">Total Seekers</p>
+      <h4 id="s-seekers" class="m-0">--</h4>
+    </div>
+  </div>
+
+  <div class="action-grid mt-5">
+    <div class="action-card shadow" onclick="location.href='manage-jobs.html'">
+      <i class="fas fa-tasks"></i>
+      <span>Review Job Posts</span>
+    </div>
+    <div class="action-card shadow" onclick="location.href='manage-users.html'">
+      <i class="fas fa-user-shield"></i>
+      <span>Manage Accounts</span>
+    </div>
+    <div class="action-card shadow" onclick="location.href='reports.html'">
+      <i class="fas fa-chart-line"></i>
+      <span>View Analytics</span>
+    </div>
+  </div>
+
+  <div class="table-card shadow mt-5">
+    <div class="table-header">
+      <h3>Recently Joined Users</h3>
+      <button class="btn-text" onclick="location.href='manage-users.html'">View All</button>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>User Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Joined Date</th>
+          </tr>
+        </thead>
+        <tbody id="recent-users">
+          <tr><td colspan="4" class="text-center py-4">Loading system data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container text-center">
+    <p>© 2026 JSTACK — Administrator Panel</p>
+  </div>
+</footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  async function init() {
+    // 1. Role Security Check
+    const user = await requireRole('admin');
+    if (!user) return;
+    
+    document.getElementById('admin-name').textContent = user.name;
+
+    // 2. Fetch Dashboard Statistics
+    try {
+      const res = await apiGet('/dashboard-stats.php');
+      
+      if (res.success) {
+        const { stats, recent_users } = res;
+        
+        // Update Stats
+        document.getElementById('s-users').textContent    = stats.total_users;
+        document.getElementById('s-jobs').textContent     = stats.total_jobs;
+        document.getElementById('s-apps').textContent     = stats.total_applications;
+        document.getElementById('s-accepted').textContent = stats.accepted_applications;
+        document.getElementById('s-employers').textContent = stats.total_employers;
+        document.getElementById('s-seekers').textContent   = stats.total_seekers;
+
+        // Update Table
+        const tbody = document.getElementById('recent-users');
+        if (recent_users && recent_users.length) {
+          tbody.innerHTML = recent_users.map(u => `
+            <tr>
+              <td><strong>${escHtml(u.name)}</strong></td>
+              <td>${escHtml(u.email)}</td>
+              <td><span class="badge badge-${u.role === 'employer' ? 'purple' : 'info'}">${u.role.toUpperCase()}</span></td>
+              <td>${new Date(u.created_at).toLocaleDateString()}</td>
+            </tr>`).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center">No new users registered recently.</td></tr>';
+        }
+      }
+    } catch (err) {
+      console.error("Dashboard init error:", err);
+    }
+  }
+  
+  init();
+</script>
+</body>
+</html>

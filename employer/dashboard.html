@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employer Dashboard - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <nav><a href="../index.html">Home</a></nav>
+  <div>
+    <span id="emp-name" style="color:white;font-size:14px;margin-right:12px;"></span>
+    <a href="#" onclick="logout()" style="color:#ffd700;">Logout</a>
+  </div>
+</header>
+
+<div class="container">
+  <h2 class="title">Employer Dashboard</h2>
+
+  <div class="dashboard-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="s-jobs">--</p><p class="stat-label">My Jobs</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="s-apps">--</p><p class="stat-label">Applications</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value green" id="s-acc">--</p><p class="stat-label">Accepted</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="s-pend">--</p><p class="stat-label">Pending</p></div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="card" onclick="location.href='post-job.html'">➕ Post a Job</div>
+    <div class="card" onclick="location.href='edit-job.html'">✏️ Manage Jobs</div>
+    <div class="card" onclick="location.href='applicants.html'">👥 View Applicants</div>
+    <div class="card" onclick="location.href='profile.html'">🏢 Company Profile</div>
+    <div class="card" onclick="location.href='../messages/inbox.html'">💬 Messages</div>
+    <div class="card" onclick="location.href='../settings/account.html'">⚙️ Settings</div>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  async function init() {
+    const user = await requireRole('employer');
+    if (!user) return;
+    document.getElementById('emp-name').textContent = '👤 ' + escHtml(user.name);
+    const res = await apiGet('/dashboard-stats.php');
+    if (res.success) {
+      document.getElementById('s-jobs').textContent = res.stats.total_jobs;
+      document.getElementById('s-apps').textContent = res.stats.total_applications;
+      document.getElementById('s-acc').textContent  = res.stats.accepted;
+      document.getElementById('s-pend').textContent = res.stats.pending;
+    }
+  }
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports - JSTACK Admin</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK <span>Reports</span></h2>
+  <div>
+    <button class="btn-outline btn-sm" onclick="window.print()">🖨️ Print</button>
+    <a href="dashboard.html" style="color:white;margin-left:12px;">← Dashboard</a>
+  </div>
+</header>
+
+<div class="container">
+  <h2 class="title">System Performance Overview</h2>
+  <p id="report-date" style="text-align:center;color:#888;margin-bottom:20px;"></p>
+
+  <div class="dashboard-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="t-jobs">--</p><p class="stat-label">Jobs Posted</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="t-users">--</p><p class="stat-label">Users</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="t-apps">--</p><p class="stat-label">Applications</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="t-employers">--</p><p class="stat-label">Employers</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value blue" id="t-seekers">--</p><p class="stat-label">Seekers</p></div>
+    <div class="card" style="cursor:default;"><p class="stat-value green" id="t-accepted">--</p><p class="stat-label">Accepted</p></div>
+  </div>
+
+  <div class="table-container" style="width:100%;margin-top:30px;">
+    <table>
+      <thead><tr><th>Category</th><th>Count</th><th>Status</th><th>Performance</th></tr></thead>
+      <tbody id="report-table"><tr><td colspan="4">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  async function init() {
+    await requireRole('admin');
+    document.getElementById('report-date').textContent = 'Generated: ' + new Date().toLocaleString();
+    const res = await apiGet('/dashboard-stats.php');
+    if (!res.success) return;
+    const s = res.stats;
+    document.getElementById('t-jobs').textContent     = s.total_jobs;
+    document.getElementById('t-users').textContent    = s.total_users;
+    document.getElementById('t-apps').textContent     = s.total_applications;
+    document.getElementById('t-employers').textContent= s.total_employers;
+    document.getElementById('t-seekers').textContent  = s.total_seekers;
+    document.getElementById('t-accepted').textContent = s.accepted_applications;
+    const rate = s.total_applications > 0 ? ((s.accepted_applications/s.total_applications)*100).toFixed(1) : '0.0';
+    document.getElementById('report-table').innerHTML = `
+      <tr><td><strong>User Base</strong></td><td>${s.total_users} accounts</td><td>✅ Active</td><td>Stable</td></tr>
+      <tr><td><strong>Job Market</strong></td><td>${s.total_jobs} listings</td><td>📈 Active</td><td>${s.active_jobs} live</td></tr>
+      <tr><td><strong>Applications</strong></td><td>${s.total_applications} total</td><td>⚡ Active</td><td>${s.pending_applications} pending</td></tr>
+      <tr><td><strong>Success Rate</strong></td><td>${rate}% accepted</td><td>🎯 Target: 15%</td><td>${parseFloat(rate)>=15?'✅ Excellent':'📈 Growing'}</td></tr>`;
+  }
+  init();
+</script>
+</body>
+</html>

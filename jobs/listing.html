@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Jobs - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="search.html">Advanced Search</a>
+  </nav>
+  <div id="nav-actions"></div>
+</header>
+
+<div class="container">
+  <h2 class="title">All Job Listings</h2>
+
+  <div class="filter-bar" style="justify-content:center;">
+    <input type="text" id="kw" placeholder="Keyword..." style="min-width:200px;">
+    <select id="cat">
+      <option value="">All Categories</option>
+      <option>IT</option><option>Marketing</option>
+      <option>Design</option><option>Finance</option><option>Other</option>
+    </select>
+    <input type="text" id="loc" placeholder="Location...">
+    <button onclick="doFilter()">Filter</button>
+    <button class="secondary" onclick="resetFilter()">Reset</button>
+  </div>
+
+  <p id="result-count" style="text-align:center;color:#888;margin-bottom:10px;"></p>
+  <div id="jobs-container" class="job-container"></div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script src="../assets/js/jobs.js"></script>
+<script>
+  async function load(kw='', cat='', loc='') {
+    const container = document.getElementById('jobs-container');
+    const count     = document.getElementById('result-count');
+    container.innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#888;">Loading...</p>';
+    const res = await loadAllJobs(kw, cat, loc);
+    if (res && res.success && res.data.length) {
+      count.textContent = res.data.length + ' jobs found';
+      container.innerHTML = res.data.map(j => renderJobCard(j)).join('');
+    } else {
+      count.textContent = '';
+      container.innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#888;">No jobs found.</p>';
+    }
+  }
+
+  function doFilter() {
+    load(
+      document.getElementById('kw').value,
+      document.getElementById('cat').value,
+      document.getElementById('loc').value
+    );
+  }
+
+  function resetFilter() {
+    document.getElementById('kw').value  = '';
+    document.getElementById('cat').value = '';
+    document.getElementById('loc').value = '';
+    load();
+  }
+
+  // Pre-fill keyword from URL if redirected from home search
+  const urlKw = new URLSearchParams(location.search).get('keyword') || '';
+  if (urlKw) document.getElementById('kw').value = urlKw;
+  load(urlKw);
+</script>
+</body>
+</html>

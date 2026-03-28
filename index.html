@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSTACK - Find Your Dream Job</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .autocomplete-wrapper { position:relative; display:inline-block; width:50%; }
+    .autocomplete-list { position:absolute; width:100%; top:100%; left:0; }
+  </style>
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <nav>
+    <a href="jobs/listing.html">Jobs</a>
+    <a href="jobs/search.html">Search</a>
+    <a href="reviews/company-review.html">Reviews</a>
+  </nav>
+  <div id="nav-actions"></div>
+</header>
+
+<section class="hero">
+  <h1>Find Your Dream Job</h1>
+  <p>Connect with top employers. Start your career journey today.</p>
+  <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+    <button onclick="location.href='jobs/listing.html'">Browse Jobs</button>
+    <button class="secondary" onclick="location.href='auth/register.html'">Get Started</button>
+  </div>
+</section>
+
+<section class="search" style="position:relative;">
+  <form onsubmit="event.preventDefault();doSearch();"
+        style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+    <div class="autocomplete-wrapper">
+      <input type="text" id="search" placeholder="Search jobs by title, company...">
+      <ul class="autocomplete-list" id="autocomplete-list"
+          style="display:none;background:white;border:1px solid #ddd;border-radius:8px;
+                 box-shadow:0 4px 12px rgba(0,0,0,.1);z-index:1000;padding:0;margin-top:4px;"></ul>
+    </div>
+    <button type="submit" style="border-radius:8px;">Search</button>
+  </form>
+</section>
+
+<h3 style="text-align:center;margin:20px 0;color:#333;">Latest Jobs</h3>
+<section id="jobs" class="job-container"></section>
+
+<div style="text-align:center;margin:10px 0 30px;">
+  <button class="secondary" onclick="location.href='jobs/listing.html'">View All Jobs</button>
+</div>
+
+<footer><p>© 2026 JSTACK — Smart Job Portal. All rights reserved.</p></footer>
+
+<script src="assets/js/main.js"></script>
+<script src="assets/js/jobs.js"></script>
+<script>
+  function doSearch() {
+    const keyword = document.getElementById('search').value.trim();
+    if (keyword) window.location.href = `jobs/search.html?keyword=${encodeURIComponent(keyword)}`;
+  }
+
+  async function loadLatestJobs() {
+    const sec = document.getElementById('jobs');
+    sec.innerHTML = '<p style="text-align:center;color:#888;grid-column:1/-1;">Loading...</p>';
+    const res = await apiGet('/jobs.php');
+    if (res.success && res.data.length) {
+      sec.innerHTML = res.data.slice(0,6).map(job => renderJobCard(job)).join('');
+    } else {
+      sec.innerHTML = '<p style="text-align:center;color:#888;grid-column:1/-1;">No jobs posted yet.</p>';
+    }
+  }
+
+  // Autocomplete setup
+  setupAutocomplete('search', 'autocomplete-list');
+  loadLatestJobs();
+</script>
+</body>
+</html>git remote add origin https://github.com/np03cs4s250024-tech/job.git

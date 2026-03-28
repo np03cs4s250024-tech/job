@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved Jobs - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="dashboard.html" style="color:white;">← Dashboard</a>
+</header>
+
+<div class="container">
+  <h2 class="title">Saved Jobs</h2>
+  <div id="alert-box"></div>
+  <div id="saved-list" class="job-container"></div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script src="../assets/js/jobs.js"></script>
+<script>
+  async function init() {
+    await requireRole('seeker');
+    const data = await apiGet('/saved.php');
+    const list = document.getElementById('saved-list');
+    if (!Array.isArray(data) || !data.length) {
+      list.innerHTML = '<p style="text-align:center;color:#888;grid-column:1/-1;">No saved jobs yet.</p>'; return;
+    }
+    list.innerHTML = data.map(job => `
+      <div class="job-card">
+        <h3>${escHtml(job.title)}</h3>
+        <p>${escHtml(job.company)} — ${escHtml(job.location||'')}</p>
+        <p style="color:#0a66c2;font-weight:600;">${escHtml(job.salary||'Negotiable')}</p>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button onclick="location.href='../jobs/detail.html?id=${job.id}'">View</button>
+          <button class="danger" onclick="unsave(${job.id})">Remove</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function unsave(jobId) {
+    const res = await apiDelete(`/saved.php?job_id=${jobId}`);
+    if (res.success) init();
+    else showAlert('alert-box', res.error || 'Failed.', 'error');
+  }
+
+  init();
+</script>
+</body>
+</html>

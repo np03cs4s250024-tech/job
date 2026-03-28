@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Detail - JSTACK</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK</h2>
+  <a href="listing.html">← All Jobs</a>
+  <div id="nav-actions"></div>
+</header>
+
+<div class="container" style="max-width:800px;">
+  <div id="job-detail" style="background:white;padding:30px;border-radius:12px;
+       box-shadow:0 4px 12px rgba(0,0,0,.08);margin-top:20px;">
+    <p style="text-align:center;color:#888;">Loading job...</p>
+  </div>
+  <div id="alert-box" style="margin-top:16px;"></div>
+</div>
+
+<footer><p>© 2026 JSTACK</p></footer>
+
+<script src="../assets/js/main.js"></script>
+<script src="../assets/js/jobs.js"></script>
+<script>
+  const jobId = new URLSearchParams(location.search).get('id');
+
+  async function loadDetail() {
+    const box  = document.getElementById('job-detail');
+    if (!jobId) { box.innerHTML = '<p>No job ID provided.</p>'; return; }
+
+    const job  = await apiGet(`/jobs.php?id=${jobId}`);
+    if (!job || job.error) { box.innerHTML = '<p>Job not found.</p>'; return; }
+
+    const user = await getCurrentUser();
+    const isClosed = job.status === 'closed';
+
+    box.innerHTML = `
+      <h2 style="color:#0a66c2;">${escHtml(job.title)}</h2>
+      <p style="margin:8px 0;font-size:16px;color:#555;">
+        <strong>${escHtml(job.employer_name || job.company)}</strong>
+      </p>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin:16px 0;">
+        <span>📍 ${escHtml(job.location||'N/A')}</span>
+        <span>💰 ${escHtml(job.salary||'Negotiable')}</span>
+        <span>📂 ${escHtml(job.category||'General')}</span>
+        <span class="badge ${isClosed?'badge-error':'badge-success'}">${isClosed?'CLOSED':'ACTIVE'}</span>
+      </div>
+      <hr style="margin:16px 0;">
+      <h4 style="margin-bottom:10px;">Job Description</h4>
+      <p style="line-height:1.8;color:#444;">${escHtml(job.description||'').replace(/\n/g,'<br>')}</p>
+      <p style="margin-top:16px;font-size:12px;color:#aaa;">
+        Posted: ${new Date(job.created_at).toLocaleDateString()}
+      </p>
+      <div id="action-area" style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;"></div>
+    `;
+
+    renderActions(user, job, isClosed);
+  }
+
+  function renderActions(user, job, isClosed) {
+    const area = document.getElementById('action-area');
+    if (!user) {
+      area.innerHTML = `<a href="${BASE}/auth/login.html"><button>Login to Apply</button></a>`;
+    } else if (user.role === 'seeker' && !isClosed) {
+      area.innerHTML = `
+        <button onclick="location.href='${BASE}/seeker/application.html?id=${job.id}'">
+          ✅ Apply Now
+        </button>
+        <button class="secondary" onclick="saveThisJob(${job.id})">🔖 Save Job</button>`;
+    } else if (isClosed) {
+      area.innerHTML = `<span style="color:#e53935;font-weight:600;">This job is no longer accepting applications.</span>`;
+    }
+  }
+
+  async function saveThisJob(id) {
+    const res = await toggleSaveJob(id, false);
+    if (res.success) showAlert('alert-box', 'Job saved to your list!', 'success');
+    else showAlert('alert-box', res.error || 'Could not save job.', 'error');
+  }
+
+  loadDetail();
+</script>
+</body>
+</html>

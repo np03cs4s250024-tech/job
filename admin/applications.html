@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Review Applications - JSTACK Admin</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>JSTACK <span>Admin</span></h2>
+  <a href="dashboard.html" style="color:white; text-decoration:none;">← Back to Dashboard</a>
+</header>
+
+<div class="container">
+  <h2 class="title">Manage Job Applications</h2>
+
+  <div class="filter-bar" style="margin-bottom: 20px; display: flex; gap: 10px;">
+    <select id="filter-status" onchange="filterApps()" style="padding: 8px; border-radius: 5px;">
+      <option value="">All Statuses</option>
+      <option value="pending">Pending</option>
+      <option value="accepted">Accepted</option>
+      <option value="rejected">Rejected</option>
+    </select>
+    <input type="text" id="filter-search" placeholder="Search applicant or job..." oninput="filterApps()" style="flex-grow: 1; padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+  </div>
+
+  <div class="table-container">
+    <div id="alert-box"></div>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #f4f4f4; text-align: left;">
+          <th>Applicant</th>
+          <th>Job Title</th>
+          <th>Employer</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="apps-table">
+        <tr><td colspan="6" style="text-align:center; padding: 20px;">Loading applications...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="../assets/js/main.js"></script>
+<script>
+  let allApps = [];
+
+  async function init() {
+    await requireRole('admin');
+    // Calling the API endpoint you already have
+    const data = await apiGet('/applications.php?admin_view=1');
+    allApps = Array.isArray(data) ? data : [];
+    renderTable(allApps);
+  }
+
+  function renderTable(apps) {
+    const tbody = document.getElementById('apps-table');
+    if (!apps.length) { 
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No applications found.</td></tr>'; 
+        return; 
+    }
+    
+    tbody.innerHTML = apps.map(a => `
+      <tr style="border-bottom: 1px solid #eee;">
+        <td><strong>${a.seeker_name || 'Unknown'}</strong><br><small>${a.seeker_email || ''}</small></td>
+        <td>${a.job_title}</td>
+        <td>${a.employer_name || 'N/A'}</td>
+        <td>${new Date(a.applied_at).toLocaleDateString()}</td>
+        <td><span class="badge badge-${a.status}">${a.status.toUpperCase()}</span></td>
+        <td>
+          <select onchange="updateStatus(${a.id}, this.value)" style="padding:5px; border-radius:4px;">
+            <option value="pending" ${a.status==='pending' ? 'selected' : ''}>Pending</option>
+            <option value="accepted" ${a.status==='accepted' ? 'selected' : ''}>Accept</option>
+            <option value="rejected" ${a.status==='rejected' ? 'selected' : ''}>Reject</option>
+          </select>
+        </td>
+      </tr>`).join('');
+  }
+
+  function filterApps() {
+    const status = document.getElementById('filter-status').value;
+    const q = document.getElementById('filter-search').value.toLowerCase();
+    renderTable(allApps.filter(a => 
+      (!status || a.status === status) && 
+      ((a.seeker_name||'').toLowerCase().includes(q) || (a.job_title||'').toLowerCase().includes(q))
+    ));
+  }
+
+  async function updateStatus(id, status) {
+    const res = await apiPut(`/applications.php?id=${id}`, { status });
+    if (res.success) {
+      alert('Status updated to ' + status);
+      init(); // Refresh data
+    } else {
+      alert('Update failed: ' + (res.error || 'Unknown error'));
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
